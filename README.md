@@ -21,7 +21,7 @@ domain.
 | --- | --- |
 | `index.html` | The whole site. Content, CSS, and the ProfilePage/Person structured data |
 | `robots.txt` | Allows crawling and points at the sitemap |
-| `sitemap.xml` | One URL, the site root |
+| `sitemap.xml` | The site root and indexable project pages on the same domain |
 | `.nojekyll` | Skips Jekyll processing so Pages just serves the files |
 
 ## Open follow-ups
