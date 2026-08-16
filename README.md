@@ -36,10 +36,6 @@ domain.
   `OpenClawTech`, but X blocks automated checks so it could not be verified as
   Ben's, and it is a project handle rather than a personal one. Decide whether
   it belongs in `sameAs`.
-- **No LinkedIn in `sameAs`.** Nothing public was found to link. A verified
-  LinkedIn URL would be the single strongest addition for name disambiguation,
-  because it is a second independent source confirming the same person.
-
 ## Editing notes
 
 - `index.html` has three places that repeat the same description text: the
