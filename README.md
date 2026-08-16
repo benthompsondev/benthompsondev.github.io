@@ -24,6 +24,22 @@ domain.
 | `sitemap.xml` | One URL, the site root |
 | `.nojekyll` | Skips Jekyll processing so Pages just serves the files |
 
+## Open follow-ups
+
+- **Google Search Console is not set up.** Everything on the site side is done,
+  but nothing tells Google the page exists beyond normal crawling. Add
+  `https://benthompsondev.github.io/` as a property, verify it (the HTML file
+  method works, drop the file in this repo root and push), then submit
+  `sitemap.xml`. Same for Bing Webmaster Tools if it seems worth it. Expect
+  weeks, not days, before the name query moves.
+- **No X/Twitter link in the structured data.** The GitHub profile lists
+  `OpenClawTech`, but X blocks automated checks so it could not be verified as
+  Ben's, and it is a project handle rather than a personal one. Decide whether
+  it belongs in `sameAs`.
+- **No LinkedIn in `sameAs`.** Nothing public was found to link. A verified
+  LinkedIn URL would be the single strongest addition for name disambiguation,
+  because it is a second independent source confirming the same person.
+
 ## Editing notes
 
 - `index.html` has three places that repeat the same description text: the
