@@ -26,16 +26,20 @@ domain.
 
 ## Open follow-ups
 
-- **Google Search Console is not set up.** Everything on the site side is done,
-  but nothing tells Google the page exists beyond normal crawling. Add
-  `https://benthompsondev.github.io/` as a property, verify it (the HTML file
-  method works, drop the file in this repo root and push), then submit
-  `sitemap.xml`. Same for Bing Webmaster Tools if it seems worth it. Expect
-  weeks, not days, before the name query moves.
+- **Google Search Console: verification file is in place, rest is manual.**
+  `google0de73824cd6c6e23.html` sits in the repo root and serves at
+  <https://benthompsondev.github.io/google0de73824cd6c6e23.html>. **Never delete
+  it.** Search Console re-checks it and removing it drops ownership of the
+  property. The property is a URL-prefix one, not a Domain property, because
+  the Domain method needs a DNS record on `github.io`. Still to do by hand:
+  submit `sitemap.xml`, request indexing for the root once, and optionally
+  import the property into Bing Webmaster Tools. Expect weeks, not days, before
+  a name query moves.
 - **No X/Twitter link in the structured data.** The GitHub profile lists
   `OpenClawTech`, but X blocks automated checks so it could not be verified as
   Ben's, and it is a project handle rather than a personal one. Decide whether
   it belongs in `sameAs`.
+
 ## Editing notes
 
 - `index.html` has three places that repeat the same description text: the
