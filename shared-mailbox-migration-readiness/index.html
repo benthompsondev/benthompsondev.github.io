@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>Deciding when a shared mailbox is safe to migrate to Exchange Online</title>
+<meta name="description" content="In a staged Exchange hybrid migration, a shared mailbox is only safe to move once every delegate has moved. This is the delegate readiness check I built during a healthcare migration with hundreds of shared mailboxes, with the sanitized PowerShell behind it.">
+<link rel="canonical" href="https://benthompsondev.github.io/shared-mailbox-migration-readiness/">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta name="author" content="Ben Thompson">
+
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Ben Thompson">
+<meta property="og:title" content="Deciding when a shared mailbox is safe to migrate to Exchange Online">
+<meta property="og:description" content="A shared mailbox is only safe to move once every delegate has moved. The delegate readiness check I built during a staged healthcare Exchange to Microsoft 365 migration.">
+<meta property="og:url" content="https://benthompsondev.github.io/shared-mailbox-migration-readiness/">
+<meta property="og:image" content="https://avatars.githubusercontent.com/u/69312218?v=4">
+<meta property="og:image:alt" content="Profile photo of Ben Thompson (benthompsondev)">
+<meta property="og:locale" content="en_CA">
+<meta property="article:author" content="Ben Thompson">
+
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Deciding when a shared mailbox is safe to migrate to Exchange Online">
+<meta name="twitter:description" content="A shared mailbox is only safe to move once every delegate has moved. The delegate readiness check I built during a staged healthcare Exchange to Microsoft 365 migration.">
+<meta name="twitter:image" content="https://avatars.githubusercontent.com/u/69312218?v=4">
+
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230b7285'/%3E%3Ctext x='16' y='22' font-family='monospace' font-size='16' font-weight='bold' fill='%23fff' text-anchor='middle'%3EBT%3C/text%3E%3C/svg%3E">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "@id": "https://benthompsondev.github.io/shared-mailbox-migration-readiness/#article",
+  "headline": "Deciding when a shared mailbox is safe to migrate to Exchange Online",
+  "description": "In a staged Exchange hybrid migration, a shared mailbox is only safe to move once every delegate has moved. The delegate readiness check built during a healthcare migration with hundreds of shared mailboxes.",
+  "url": "https://benthompsondev.github.io/shared-mailbox-migration-readiness/",
+  "datePublished": "2026-09-02",
+  "dateModified": "2026-09-02",
+  "inLanguage": "en",
+  "isPartOf": { "@id": "https://benthompsondev.github.io/#profilepage" },
+  "author": {
+    "@type": "Person",
+    "@id": "https://benthompsondev.github.io/#person",
+    "name": "Ben Thompson",
+    "url": "https://benthompsondev.github.io/"
+  },
+  "about": [
+    "Exchange hybrid deployment",
+    "Shared mailbox migration",
+    "Microsoft 365 migration planning",
+    "PowerShell automation"
+  ],
+  "mentions": [
+    { "@type": "SoftwareSourceCode", "name": "Test-SharedMailboxMigrationReadinessDemo.ps1", "codeRepository": "https://github.com/benthompsondev/enterprise-powershell-systems", "programmingLanguage": "PowerShell" }
+  ]
+}
+</script>
+
+<style>
+  :root {
+    --bg: #ffffff;
+    --surface: #f6f8fa;
+    --border: #d8dee4;
+    --text: #1f2328;
+    --muted: #5a6169;
+    --accent: #0b6e83;
+    --warn-bg: #fff8e6;
+    --warn-border: #e8d08a;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --border: #30363d;
+      --text: #e6edf3;
+      --muted: #9198a1;
+      --accent: #58c8dd;
+      --warn-bg: #1f1a0d;
+      --warn-border: #5c4a1f;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 17px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    -webkit-text-size-adjust: 100%;
+  }
+  .wrap { max-width: 46rem; margin: 0 auto; padding: 2.5rem 1.25rem 4rem; }
+  a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+  a:hover { text-decoration-thickness: 2px; }
+  .crumb { font-size: .93rem; color: var(--muted); margin: 0 0 1.6rem; }
+  header { border-bottom: 1px solid var(--border); padding-bottom: 1.6rem; margin-bottom: 2rem; }
+  h1 { font-size: 1.95rem; line-height: 1.22; margin: 0 0 .6rem; letter-spacing: -0.02em; }
+  .byline { margin: 0; color: var(--muted); font-size: .95rem; }
+  .standfirst { margin: 1.3rem 0 0; font-size: 1.1rem; }
+  h2 {
+    font-size: 1.28rem; margin: 2.5rem 0 .8rem; letter-spacing: -0.01em;
+    padding-bottom: .35rem; border-bottom: 1px solid var(--border);
+  }
+  h3 { font-size: 1.02rem; margin: 1.7rem 0 .4rem; }
+  p { margin: 0 0 1rem; }
+  ul, ol { margin: 0 0 1rem; padding-left: 1.25rem; }
+  li { margin-bottom: .45rem; }
+  code {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 4px; padding: .1em .35em; font-size: .9em;
+  }
+  pre {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; padding: .9rem 1rem; overflow-x: auto; font-size: .86rem;
+    line-height: 1.55;
+  }
+  pre code { background: none; border: 0; padding: 0; font-size: inherit; }
+  .tablewrap { overflow-x: auto; margin: 0 0 1rem; }
+  table { border-collapse: collapse; width: 100%; font-size: .9rem; }
+  th, td { border: 1px solid var(--border); padding: .5rem .6rem; text-align: left; vertical-align: top; }
+  th { background: var(--surface); font-weight: 600; }
+  blockquote {
+    margin: 0 0 1rem; padding: .1rem 0 .1rem 1rem;
+    border-left: 3px solid var(--border); color: var(--muted);
+  }
+  .note {
+    background: var(--warn-bg); border: 1px solid var(--warn-border);
+    border-radius: 8px; padding: .9rem 1.1rem; margin: 0 0 1rem;
+  }
+  .note p:last-child { margin-bottom: 0; }
+  .links { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1rem 1.1rem; }
+  .links p:last-child { margin-bottom: 0; }
+  footer {
+    margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--border);
+    color: var(--muted); font-size: .93rem;
+  }
+  footer a { margin-right: 1rem; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<p class="crumb"><a href="/">Ben Thompson</a> &rsaquo; Shared mailbox migration readiness</p>
+
+<header>
+  <h1>Deciding when a shared mailbox is safe to migrate to Exchange Online</h1>
+  <p class="byline">
+    By <a href="/">Ben Thompson</a>, healthcare IT systems and automation &middot;
+    <a href="https://github.com/benthompsondev">@benthompsondev</a>
+  </p>
+  <p class="standfirst">
+    A shared mailbox is not ready to move because the mailbox looks ready. It is
+    ready when every person who has access to it has already moved. That
+    distinction is the difference between a quiet migration wave and a morning
+    of calls from a clinic that cannot open its referrals mailbox.
+  </p>
+</header>
+
+<main>
+
+<section>
+  <h2>The problem</h2>
+  <p>
+    I worked on a staged move from on-prem Exchange to Microsoft 365 in a large
+    healthcare environment. Thousands of users, hundreds of shared mailboxes,
+    public folders, directory-based licensing. It ran in waves over a long
+    period, which is normal for a migration that size and also the source of the
+    problem.
+  </p>
+  <p>
+    In a staged migration there is always a middle period where some people are
+    in the cloud and some are still on-prem. During that period a shared mailbox
+    has a property that a user mailbox does not: it is only useful because other
+    accounts have permissions on it. Its readiness is not a property of itself.
+    It is a property of everyone attached to it.
+  </p>
+  <p>
+    The failure mode is quiet. You migrate a shared mailbox because the mailbox
+    itself has no blockers. Nothing errors. The move completes. Then a delegate
+    who is still on-prem finds the mailbox has stopped appearing in Outlook, or
+    can no longer send from it, and you get a ticket that does not obviously
+    point back at last night's migration batch.
+  </p>
+</section>
+
+<section>
+  <h2>What Microsoft actually supports cross-premises</h2>
+  <p>
+    This is worth getting exactly right, because the rule is narrower than
+    people assume and the general advice to "just migrate them together" hides
+    the detail. From Microsoft's
+    <a href="https://learn.microsoft.com/en-us/exchange/permissions">Permissions in Exchange hybrid deployments</a>:
+  </p>
+  <div class="tablewrap">
+  <table>
+    <thead>
+      <tr><th>Permission</th><th>Cross-premises in hybrid</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Full Access</td><td>Supported, Outlook desktop. Not fully supported in Outlook on the web, where it produces a redirect and a credentials prompt</td></tr>
+      <tr><td>Send on Behalf</td><td>Supported, but needs the Exchange Hybrid option enabled in Microsoft Entra Connect so the attribute syncs</td></tr>
+      <tr><td>Send As</td><td>Not synchronized automatically. Works in most cases only if you add it manually on both sides</td></tr>
+      <tr><td>Auto-mapping</td><td>Not supported</td></tr>
+      <tr><td>Folder permissions</td><td>Not supported</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>And the sentence that actually drives migration planning:</p>
+  <blockquote>
+    <p>
+      "Any mailboxes that receive these permissions from another mailbox need to
+      be moved at the same time as the granting mailbox. If a mailbox receives
+      permissions from multiple mailboxes, that mailbox, and all of the
+      mailboxes granting permissions to it, need to be moved at the same time."
+    </p>
+  </blockquote>
+  <p>
+    That is a correct rule and a completely impractical instruction on its own.
+    It tells you the constraint. It does not tell you which of your several
+    hundred shared mailboxes currently satisfy it, and that answer changes every
+    time a wave completes.
+  </p>
+</section>
+
+<section>
+  <h2>The approach: invert the question</h2>
+  <p>
+    The useful move is to stop asking "is this mailbox ready" and start asking
+    "is every delegate of this mailbox ready", then roll the per-delegate
+    answers up into a per-mailbox verdict. One blocked delegate blocks the
+    mailbox. No averaging, no percentage ready, no partial go.
+  </p>
+  <p>Two inputs, both of which you already have during a migration:</p>
+  <ul>
+    <li>
+      A permissions export: one row per delegate per mailbox, with the
+      permission type, the requested wave, and the business owner who has to
+      sign off.
+    </li>
+    <li>
+      A user migration state export: for each account, whether it is on-prem or
+      in Microsoft 365, its mailbox location, its licensing state, and whether
+      it is enabled.
+    </li>
+  </ul>
+  <p>
+    The permissions export is the grain that matters. It is per relationship,
+    not per mailbox, which is exactly the shape the Microsoft rule is written
+    against.
+  </p>
+</section>
+
+<section>
+  <h2>The mechanism</h2>
+  <p>
+    Each permission row is joined to the delegate's migration state, then
+    evaluated against an ordered ladder of block reasons. The order is the
+    interesting part: it is arranged so the reason reported is the most
+    fundamental one, not whichever check happened to run first.
+  </p>
+<pre><code>$blockReason = if (-not $foundUser) {
+    "Delegated user not found in migration export"
+}
+elseif ($user.Enabled -ne "True") {
+    "Delegated user account is disabled"
+}
+elseif ($user.MigrationState -ne "O365") {
+    "Delegated user is not migrated to O365 yet"
+}
+elseif ($user.LicenseStatus -ne "Ready") {
+    "Delegated user is migrated but licensing still needs review"
+}
+else {
+    ""
+}</code></pre>
+  <p>
+    A delegate who is missing from the export entirely is a data problem, not a
+    migration problem, and saying so is more useful than reporting them as "not
+    migrated". A disabled account is a cleanup question for the business owner
+    before it is a migration question. Only once an account is present and
+    enabled does its migration state mean anything, and only once it has
+    migrated does its licensing matter.
+  </p>
+  <p>The per-mailbox verdict is then a strict roll-up:</p>
+<pre><code>$blockedRows = @($rows | Where-Object { $_.ReadyForSharedMailboxMigration -ne $true })
+$ready = $blockedRows.Count -eq 0</code></pre>
+  <p>
+    And the output is two CSVs rather than one. The mailbox-level file is what a
+    migration lead schedules from. The permission-level detail file is what you
+    open when someone asks why their mailbox was held back, because it names the
+    specific person.
+  </p>
+</section>
+
+<section>
+  <h2>What the output looks like</h2>
+  <p>
+    Sanitized sample output from the public demo, showing the three cases that
+    occur. The real file has nine columns including the requested wave, the
+    business owner, and the recommended action; this is four of them, abridged
+    to fit:
+  </p>
+<pre><code>MailboxName            BlockedDelegates  ReadinessStatus  BlockReasons
+cardiology-scheduling  0                 Ready
+clinic-referrals       1                 Blocked          Delegated user is not migrated to O365 yet
+legacy-records         2                 Blocked          Delegated user is migrated but licensing
+                                                          still needs review; Delegated user not
+                                                          found in migration export</code></pre>
+  <p>
+    <code>cardiology-scheduling</code> goes in the next batch.
+    <code>clinic-referrals</code> waits one wave, because a single delegate is
+    still on-prem. <code>legacy-records</code> is the interesting one: it is not
+    blocked by migration progress at all. It is blocked by a duplicate license
+    path on one account and a delegate who does not exist in the user export.
+    Neither of those gets fixed by waiting.
+  </p>
+  <p>
+    That third case is the main argument for running this as a report rather
+    than a gate. A mailbox that will never unblock itself needs a person, and
+    you want to know that weeks before its requested wave, not on the night.
+  </p>
+</section>
+
+<section>
+  <h2>Why it is stricter than Microsoft requires</h2>
+  <div class="note">
+    <p>
+      This check blocks on any unready delegate regardless of permission type.
+      That is stricter than Microsoft's matrix requires, and it is a choice
+      rather than an oversight.
+    </p>
+  </div>
+  <p>
+    A more precise implementation would let a Full Access delegate through while
+    holding a Send As one, since Full Access does work cross-premises. I did not
+    do that, for three reasons.
+  </p>
+  <ul>
+    <li>
+      The supported cases carry conditions that are easy to get wrong in a large
+      environment: Full Access wants the Outlook desktop client, Send on Behalf
+      wants a specific Entra Connect configuration, and auto-mapping does not
+      work cross-premises at all. "Supported" and "behaves the way the user
+      expects" are not the same sentence.
+    </li>
+    <li>
+      The cost of the two errors is not symmetric. Holding a mailbox for one
+      wave costs a scheduling conversation. Breaking access to a clinical shared
+      mailbox costs a ticket, a workaround, and trust in the migration.
+    </li>
+    <li>
+      A rule a migration lead can hold in their head gets followed. "Every
+      delegate has moved" survives being explained in a status meeting. A
+      per-permission-type matrix does not.
+    </li>
+  </ul>
+  <p>
+    If you are running a smaller migration where a wave of delay is expensive,
+    splitting the verdict by permission type is a reasonable change. The block
+    ladder is where you would make it.
+  </p>
+</section>
+
+<section>
+  <h2>The checks that earned their place</h2>
+  <p>
+    The obvious value is scheduling. The checks that turned out to matter most
+    were the boring input ones.
+  </p>
+  <ul>
+    <li>
+      <strong>Delegates who were not in the user export.</strong> Permissions
+      outlive people. Old entries pointing at accounts that no longer exist show
+      up as permission rows long after the person is gone, and they look
+      identical to a real blocker until you separate the two.
+    </li>
+    <li>
+      <strong>Disabled accounts still holding permissions.</strong> Same root
+      cause. Worth surfacing to the business owner as a cleanup item rather than
+      silently ignoring.
+    </li>
+    <li>
+      <strong>Duplicate license paths.</strong> An account can be migrated and
+      still not be in a good state. Treating "migrated" as the finish line hides
+      that.
+    </li>
+  </ul>
+  <p>
+    None of those are exciting. All of them are cheaper to find in a CSV in
+    advance than in a ticket afterwards.
+  </p>
+</section>
+
+<section>
+  <h2>Verification and safety</h2>
+  <p>
+    The properties that made this safe to run repeatedly during a live
+    migration:
+  </p>
+  <ul>
+    <li>
+      <strong>It reads and reports. It does not act.</strong> Nothing in it
+      moves a mailbox or changes a permission. The output is a plan for a person
+      to schedule from, which means running it at the wrong moment costs
+      nothing.
+    </li>
+    <li>
+      <strong>Required columns are validated before any logic runs.</strong> The
+      import throws if the CSV is missing a column it depends on, rather than
+      quietly evaluating null fields and producing a confident wrong answer.
+    </li>
+    <li>
+      <strong>Every verdict carries its reason.</strong> A status with no
+      explanation gets argued with. A status naming the delegate gets acted on.
+    </li>
+    <li>
+      <strong>It is re-run, not maintained.</strong> Readiness changes as waves
+      complete, so the report is regenerated from current exports rather than
+      updated by hand.
+    </li>
+  </ul>
+  <p>
+    The public demo version has a <code>tests/Run-DemoCheck.ps1</code> that
+    proves the script still runs end to end against the sample data, and GitHub
+    Actions runs it on changes.
+  </p>
+</section>
+
+<section>
+  <h2>The code</h2>
+  <p>
+    This is a sanitized demo built from the real work. It uses fake data, local
+    files, and simulated actions instead of touching Exchange, Active Directory,
+    or Microsoft 365. The workflow shape is the part worth reading.
+  </p>
+  <div class="links">
+    <p>
+      <a href="https://github.com/benthompsondev/enterprise-powershell-systems/blob/main/enterprise-messaging-systems/o365-migration-readiness-toolkit/scripts/Test-SharedMailboxMigrationReadinessDemo.ps1">Test-SharedMailboxMigrationReadinessDemo.ps1</a>:
+      the readiness check described here
+    </p>
+    <p>
+      <a href="https://github.com/benthompsondev/enterprise-powershell-systems/tree/main/enterprise-messaging-systems/o365-migration-readiness-toolkit">O365 Migration Support Toolkit</a>:
+      the wider toolkit, covering migration waves, license groups, public
+      folder retirement, and mailbox repair plans
+    </p>
+    <p>
+      <a href="https://github.com/benthompsondev/enterprise-powershell-systems/tree/main/enterprise-messaging-systems/o365-migration-readiness-toolkit/examples/sample-output/03-shared-mailboxes">Sample output</a>:
+      the two CSVs the script writes
+    </p>
+    <p>
+      <a href="https://github.com/benthompsondev/enterprise-powershell-systems">Enterprise PowerShell Systems</a>:
+      the full sanitized automation portfolio
+    </p>
+  </div>
+</section>
+
+<section>
+  <h2>If you are planning this now</h2>
+  <p>
+    The short version, whatever tooling you use:
+  </p>
+  <ol>
+    <li>
+      Export shared mailbox permissions at the delegate grain, not the mailbox
+      grain. One row per person per mailbox.
+    </li>
+    <li>
+      Join it to current migration state and treat any delegate you cannot
+      resolve as a blocker, not as a blank.
+    </li>
+    <li>
+      Roll up strictly. One blocked delegate holds the mailbox.
+    </li>
+    <li>
+      Separate "will unblock when the wave runs" from "needs a human". They look
+      the same in a status column and they are not the same problem.
+    </li>
+    <li>
+      Regenerate after every wave. A readiness report is only true on the day it
+      was made.
+    </li>
+  </ol>
+</section>
+
+</main>
+
+<footer>
+  <p>
+    Written by Ben Thompson, who works in healthcare IT systems and automation
+    in Cambridge, Ontario. More at
+    <a href="/">benthompsondev.github.io</a>.
+  </p>
+  <p>
+    <a href="/">Home</a>
+    <a href="https://github.com/benthompsondev">GitHub</a>
+    <a href="https://www.linkedin.com/in/benjaminthompson1993/">LinkedIn</a>
+  </p>
+</footer>
+
+</div>
+</body>
+</html>
