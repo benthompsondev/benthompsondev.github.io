@@ -20,7 +20,7 @@ domain.
 | File | What it does |
 | --- | --- |
 | `index.html` | The front page. Content, CSS, and the ProfilePage/Person structured data |
-| `shared-mailbox-migration-readiness/index.html` | Case study: deciding when a shared mailbox is safe to migrate in a staged Exchange hybrid migration. Self-contained like `index.html`, with its own TechArticle structured data pointing back at the Person `@id` |
+| `shared-mailbox-migration-readiness/index.html` | Case study: checking delegate readiness before migrating a shared mailbox during a phased Exchange hybrid migration. Self-contained like `index.html`, with its own TechArticle structured data pointing back at the Person `@id` |
 | `robots.txt` | Allows crawling and points at the sitemap |
 | `sitemap.xml` | The site root and indexable project pages on the same domain |
 | `.nojekyll` | Skips Jekyll processing so Pages just serves the files |

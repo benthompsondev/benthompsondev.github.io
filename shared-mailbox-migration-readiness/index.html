@@ -4,16 +4,16 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<title>Deciding when a shared mailbox is safe to migrate to Exchange Online</title>
-<meta name="description" content="In a staged Exchange hybrid migration, a shared mailbox is only safe to move once every delegate has moved. This is the delegate readiness check I built during a healthcare migration with hundreds of shared mailboxes, with the sanitized PowerShell behind it.">
+<title>Checking delegate readiness before migrating a shared mailbox to Exchange Online</title>
+<meta name="description" content="In a phased Exchange hybrid migration, shared mailbox delegates need their own readiness check. This is the conservative PowerShell prerequisite check I built during a healthcare migration with hundreds of shared mailboxes.">
 <link rel="canonical" href="https://benthompsondev.github.io/shared-mailbox-migration-readiness/">
 <meta name="robots" content="index, follow, max-image-preview:large">
 <meta name="author" content="Ben Thompson">
 
 <meta property="og:type" content="article">
 <meta property="og:site_name" content="Ben Thompson">
-<meta property="og:title" content="Deciding when a shared mailbox is safe to migrate to Exchange Online">
-<meta property="og:description" content="A shared mailbox is only safe to move once every delegate has moved. The delegate readiness check I built during a staged healthcare Exchange to Microsoft 365 migration.">
+<meta property="og:title" content="Checking delegate readiness before migrating a shared mailbox to Exchange Online">
+<meta property="og:description" content="A conservative delegate-readiness check from a phased healthcare Exchange hybrid migration, with the sanitized PowerShell behind it.">
 <meta property="og:url" content="https://benthompsondev.github.io/shared-mailbox-migration-readiness/">
 <meta property="og:image" content="https://avatars.githubusercontent.com/u/69312218?v=4">
 <meta property="og:image:alt" content="Profile photo of Ben Thompson (benthompsondev)">
@@ -21,8 +21,8 @@
 <meta property="article:author" content="Ben Thompson">
 
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Deciding when a shared mailbox is safe to migrate to Exchange Online">
-<meta name="twitter:description" content="A shared mailbox is only safe to move once every delegate has moved. The delegate readiness check I built during a staged healthcare Exchange to Microsoft 365 migration.">
+<meta name="twitter:title" content="Checking delegate readiness before migrating a shared mailbox to Exchange Online">
+<meta name="twitter:description" content="A conservative delegate-readiness check from a phased healthcare Exchange hybrid migration, with the sanitized PowerShell behind it.">
 <meta name="twitter:image" content="https://avatars.githubusercontent.com/u/69312218?v=4">
 
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230b7285'/%3E%3Ctext x='16' y='22' font-family='monospace' font-size='16' font-weight='bold' fill='%23fff' text-anchor='middle'%3EBT%3C/text%3E%3C/svg%3E">
@@ -32,11 +32,11 @@
   "@context": "https://schema.org",
   "@type": "TechArticle",
   "@id": "https://benthompsondev.github.io/shared-mailbox-migration-readiness/#article",
-  "headline": "Deciding when a shared mailbox is safe to migrate to Exchange Online",
-  "description": "In a staged Exchange hybrid migration, a shared mailbox is only safe to move once every delegate has moved. The delegate readiness check built during a healthcare migration with hundreds of shared mailboxes.",
+  "headline": "Checking delegate readiness before migrating a shared mailbox to Exchange Online",
+  "description": "In a phased Exchange hybrid migration, shared mailbox delegates need their own readiness check. This is a conservative prerequisite check built during a healthcare migration with hundreds of shared mailboxes.",
   "url": "https://benthompsondev.github.io/shared-mailbox-migration-readiness/",
   "datePublished": "2026-09-02",
-  "dateModified": "2026-09-02",
+  "dateModified": "2026-09-02T14:22:55-04:00",
   "inLanguage": "en",
   "isPartOf": { "@id": "https://benthompsondev.github.io/#profilepage" },
   "author": {
@@ -139,19 +139,19 @@
 <body>
 <div class="wrap">
 
-<p class="crumb"><a href="/">Ben Thompson</a> &rsaquo; Shared mailbox migration readiness</p>
+<p class="crumb"><a href="/">Ben Thompson</a> &rsaquo; Shared mailbox delegate readiness</p>
 
 <header>
-  <h1>Deciding when a shared mailbox is safe to migrate to Exchange Online</h1>
+  <h1>Checking delegate readiness before migrating a shared mailbox to Exchange Online</h1>
   <p class="byline">
     By <a href="/">Ben Thompson</a>, healthcare IT systems and automation &middot;
     <a href="https://github.com/benthompsondev">@benthompsondev</a>
   </p>
   <p class="standfirst">
-    A shared mailbox is not ready to move because the mailbox looks ready. It is
-    ready when every person who has access to it has already moved. That
-    distinction is the difference between a quiet migration wave and a morning
-    of calls from a clinic that cannot open its referrals mailbox.
+    Before a shared mailbox moves, every person who has access to it needs to be
+    checked against the migration state. Passing that check clears one important
+    prerequisite. It does not prove the mailbox itself has no other migration
+    blockers.
   </p>
 </header>
 
@@ -160,18 +160,18 @@
 <section>
   <h2>The problem</h2>
   <p>
-    I worked on a staged move from on-prem Exchange to Microsoft 365 in a large
+    I worked on a phased move from on-prem Exchange to Microsoft 365 in a large
     healthcare environment. Thousands of users, hundreds of shared mailboxes,
     public folders, directory-based licensing. It ran in waves over a long
     period, which is normal for a migration that size and also the source of the
     problem.
   </p>
   <p>
-    In a staged migration there is always a middle period where some people are
-    in the cloud and some are still on-prem. During that period a shared mailbox
-    has a property that a user mailbox does not: it is only useful because other
-    accounts have permissions on it. Its readiness is not a property of itself.
-    It is a property of everyone attached to it.
+    In a hybrid migration performed in waves, there is a middle period where
+    some people are in the cloud and some are still on-prem. During that period,
+    a shared mailbox is only useful because other accounts have permissions on
+    it. Checking those delegates is one part of its migration readiness, not a
+    replacement for checking the mailbox itself.
   </p>
   <p>
     The failure mode is quiet. You migrate a shared mailbox because the mailbox
@@ -204,7 +204,7 @@
     </tbody>
   </table>
   </div>
-  <p>And the sentence that actually drives migration planning:</p>
+  <p>For unsupported cross-premises permissions and capabilities, Microsoft adds:</p>
   <blockquote>
     <p>
       "Any mailboxes that receive these permissions from another mailbox need to
@@ -214,27 +214,28 @@
     </p>
   </blockquote>
   <p>
-    That is a correct rule and a completely impractical instruction on its own.
-    It tells you the constraint. It does not tell you which of your several
-    hundred shared mailboxes currently satisfy it, and that answer changes every
-    time a wave completes.
+    The demo uses a conservative scheduling prerequisite: every delegate must
+    already have moved before the shared mailbox passes this check. That is not
+    a proof that every dependency was preserved throughout the migration, and it
+    is not a complete mailbox-readiness test. It answers the narrower question
+    of which mailboxes currently pass the delegate check as waves complete.
   </p>
 </section>
 
 <section>
   <h2>The approach: invert the question</h2>
   <p>
-    The useful move is to stop asking "is this mailbox ready" and start asking
-    "is every delegate of this mailbox ready", then roll the per-delegate
-    answers up into a per-mailbox verdict. One blocked delegate blocks the
-    mailbox. No averaging, no percentage ready, no partial go.
+    The useful move is to split out one question: "does every delegate of this
+    mailbox meet the prerequisite?" Then roll the per-delegate
+    answers up into a per-mailbox result. One unresolved delegate blocks the
+    delegate check. No averaging, no percentage ready, no partial pass.
   </p>
   <p>Two inputs, both of which you already have during a migration:</p>
   <ul>
     <li>
       A permissions export: one row per delegate per mailbox, with the
-      permission type, the requested wave, and the business owner who has to
-      sign off.
+      permission type, the requested wave, and the business owner included for
+      review.
     </li>
     <li>
       A user migration state export: for each account, whether it is on-prem or
@@ -244,8 +245,8 @@
   </ul>
   <p>
     The permissions export is the grain that matters. It is per relationship,
-    not per mailbox, which is exactly the shape the Microsoft rule is written
-    against.
+    not per mailbox, which is the right shape for evaluating delegate
+    dependencies.
   </p>
 </section>
 
@@ -280,43 +281,43 @@ else {
     enabled does its migration state mean anything, and only once it has
     migrated does its licensing matter.
   </p>
-  <p>The per-mailbox verdict is then a strict roll-up:</p>
-<pre><code>$blockedRows = @($rows | Where-Object { $_.ReadyForSharedMailboxMigration -ne $true })
-$ready = $blockedRows.Count -eq 0</code></pre>
+  <p>The per-mailbox delegate result is then a strict roll-up:</p>
+<pre><code>$blockedRows = @($rows | Where-Object { $_.DelegatePrerequisitesMet -ne $true })
+$delegateChecksPassed = $blockedRows.Count -eq 0</code></pre>
   <p>
-    And the output is two CSVs rather than one. The mailbox-level file is what a
-    migration lead schedules from. The permission-level detail file is what you
-    open when someone asks why their mailbox was held back, because it names the
-    specific person.
+    And the output is two CSVs rather than one. The mailbox-level file gives a
+    migration lead the delegate result for each mailbox. The permission-level
+    detail file is what you open when someone asks why the check was blocked,
+    because it names the specific person.
   </p>
 </section>
 
 <section>
   <h2>What the output looks like</h2>
   <p>
-    Sanitized sample output from the public demo, showing the three cases that
-    occur. The real file has nine columns including the requested wave, the
-    business owner, and the recommended action; this is four of them, abridged
-    to fit:
+    Sanitized sample output from the public demo, showing three cases it
+    intentionally models. The full file has nine columns including the requested
+    wave, the business owner, and the next review action; this is four of them,
+    abridged to fit:
   </p>
-<pre><code>MailboxName            BlockedDelegates  ReadinessStatus  BlockReasons
-cardiology-scheduling  0                 Ready
-clinic-referrals       1                 Blocked          Delegated user is not migrated to O365 yet
-legacy-records         2                 Blocked          Delegated user is migrated but licensing
-                                                          still needs review; Delegated user not
-                                                          found in migration export</code></pre>
+<pre><code>MailboxName            BlockedDelegates  DelegateReadinessStatus  DelegateBlockReasons
+cardiology-scheduling  0                 Passed
+clinic-referrals       1                 Blocked                  Delegated user is not migrated to O365 yet
+legacy-records         2                 Blocked                  Delegated user is migrated but licensing
+                                                                  still needs review; Delegated user not
+                                                                  found in migration export</code></pre>
   <p>
-    <code>cardiology-scheduling</code> goes in the next batch.
-    <code>clinic-referrals</code> waits one wave, because a single delegate is
-    still on-prem. <code>legacy-records</code> is the interesting one: it is not
-    blocked by migration progress at all. It is blocked by a duplicate license
-    path on one account and a delegate who does not exist in the user export.
-    Neither of those gets fixed by waiting.
+    <code>cardiology-scheduling</code> passes the delegate check and continues to
+    the remaining mailbox-readiness review. <code>clinic-referrals</code> is
+    blocked because a single delegate is still on-prem.
+    <code>legacy-records</code> models two conditions that waiting will not fix:
+    a duplicate license path on one account and a delegate missing from the user
+    export.
   </p>
   <p>
-    That third case is the main argument for running this as a report rather
-    than a gate. A mailbox that will never unblock itself needs a person, and
-    you want to know that weeks before its requested wave, not on the night.
+    That third case is the main argument for keeping reasons in the report. A
+    delegate check that will not clear by itself needs a person to investigate,
+    ideally before the requested wave.
   </p>
 </section>
 
@@ -361,22 +362,22 @@ legacy-records         2                 Blocked          Delegated user is migr
 </section>
 
 <section>
-  <h2>The checks that earned their place</h2>
+  <h2>Cases the demo intentionally models</h2>
   <p>
-    The obvious value is scheduling. The checks that turned out to matter most
-    were the boring input ones.
+    The demo checks for a few input conditions that should be separated from
+    normal migration progress. These are modeled cases, not a list of incidents
+    from the real migration.
   </p>
   <ul>
     <li>
-      <strong>Delegates who were not in the user export.</strong> Permissions
-      outlive people. Old entries pointing at accounts that no longer exist show
-      up as permission rows long after the person is gone, and they look
-      identical to a real blocker until you separate the two.
+      <strong>Delegates who were not in the user export.</strong> Permissions can
+      outlive accounts, but a missing row can also mean an incomplete export or
+      a matching problem. The report keeps it visible for investigation.
     </li>
     <li>
-      <strong>Disabled accounts still holding permissions.</strong> Same root
-      cause. Worth surfacing to the business owner as a cleanup item rather than
-      silently ignoring.
+      <strong>Disabled accounts still holding permissions.</strong> Worth
+      surfacing to the business owner as a cleanup item rather than silently
+      ignoring.
     </li>
     <li>
       <strong>Duplicate license paths.</strong> An account can be migrated and
@@ -385,23 +386,22 @@ legacy-records         2                 Blocked          Delegated user is migr
     </li>
   </ul>
   <p>
-    None of those are exciting. All of them are cheaper to find in a CSV in
-    advance than in a ticket afterwards.
+    None of those prove a mailbox is ready to move. They make the delegate
+    prerequisite clear enough for someone to review before the migration wave.
   </p>
 </section>
 
 <section>
   <h2>Verification and safety</h2>
   <p>
-    The properties that made this safe to run repeatedly during a live
+    The properties that made this useful as a repeated check during a live
     migration:
   </p>
   <ul>
     <li>
       <strong>It reads and reports. It does not act.</strong> Nothing in it
-      moves a mailbox or changes a permission. The output is a plan for a person
-      to schedule from, which means running it at the wrong moment costs
-      nothing.
+      moves a mailbox or changes a permission. The output is a report for a
+      person to review, and it is only as current as the source exports.
     </li>
     <li>
       <strong>Required columns are validated before any logic runs.</strong> The
@@ -409,7 +409,7 @@ legacy-records         2                 Blocked          Delegated user is migr
       quietly evaluating null fields and producing a confident wrong answer.
     </li>
     <li>
-      <strong>Every verdict carries its reason.</strong> A status with no
+      <strong>Every blocked result carries its reason.</strong> A status with no
       explanation gets argued with. A status naming the delegate gets acted on.
     </li>
     <li>
@@ -435,7 +435,7 @@ legacy-records         2                 Blocked          Delegated user is migr
   <div class="links">
     <p>
       <a href="https://github.com/benthompsondev/enterprise-powershell-systems/blob/main/enterprise-messaging-systems/o365-migration-readiness-toolkit/scripts/Test-SharedMailboxMigrationReadinessDemo.ps1">Test-SharedMailboxMigrationReadinessDemo.ps1</a>:
-      the readiness check described here
+      the delegate-prerequisite check described here
     </p>
     <p>
       <a href="https://github.com/benthompsondev/enterprise-powershell-systems/tree/main/enterprise-messaging-systems/o365-migration-readiness-toolkit">O365 Migration Support Toolkit</a>:
@@ -468,15 +468,15 @@ legacy-records         2                 Blocked          Delegated user is migr
       resolve as a blocker, not as a blank.
     </li>
     <li>
-      Roll up strictly. One blocked delegate holds the mailbox.
+      Roll up strictly. One unresolved delegate blocks the delegate check.
     </li>
     <li>
       Separate "will unblock when the wave runs" from "needs a human". They look
       the same in a status column and they are not the same problem.
     </li>
     <li>
-      Regenerate after every wave. A readiness report is only true on the day it
-      was made.
+      Regenerate after every wave. A delegate-readiness report is only as current
+      as its source exports.
     </li>
   </ol>
 </section>
