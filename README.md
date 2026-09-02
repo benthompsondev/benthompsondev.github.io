@@ -32,9 +32,14 @@ domain.
   it.** Search Console re-checks it and removing it drops ownership of the
   property. The property is a URL-prefix one, not a Domain property, because
   the Domain method needs a DNS record on `github.io`. Still to do by hand:
-  submit `sitemap.xml`, request indexing for the root once, and optionally
+  submit `sitemap.xml`, request indexing for the root once, request indexing
+  for `/usageloop/` now that it is linked and in the sitemap, and optionally
   import the property into Bing Webmaster Tools. Expect weeks, not days, before
   a name query moves.
+- **The other project pages carry no structured data.** `/usageloop/` has
+  `SoftwareApplication` and `Person` JSON-LD; `/cloakscan/` and
+  `/ledger-local-finance/` have none. That is a fix in those repos, not this
+  one, but it is the biggest remaining discovery gap on this origin.
 - **No X/Twitter link in the structured data.** The GitHub profile lists
   `OpenClawTech`, but X blocks automated checks so it could not be verified as
   Ben's, and it is a project handle rather than a personal one. Decide whether
@@ -46,7 +51,16 @@ domain.
   `<meta name="description">`, the Open Graph tags, and the Twitter tags. Change
   one, change all three.
 - Update `<lastmod>` in `sitemap.xml` and `dateModified` in the JSON-LD when the
-  content meaningfully changes.
+  content meaningfully changes. `<lastmod>` is the only sitemap hint Google
+  actually uses, and only while it stays verifiable, so check the real date
+  before writing one:
+
+  ```bash
+  curl -sI https://benthompsondev.github.io/usageloop/ | grep -i last-modified
+  ```
+
+  Google ignores `<changefreq>` and `<priority>`, so this sitemap does not carry
+  them. Do not add them back.
 - The canonical URL is `https://benthompsondev.github.io/` with the trailing
   slash. Keep it that way.
 - `robots.txt` here covers the whole `benthompsondev.github.io` origin, so it

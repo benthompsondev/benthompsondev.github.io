@@ -25,8 +25,11 @@ source material.
 - Add a `sameAs` entry only for a public URL that has been fetched and verified
   as Ben's. An unverified profile link is worse than no link.
 - `robots.txt` and the origin are shared with the project Pages sites
-  (`/cloakscan/`, `/ledger-local-finance/`, `/wedding-50-50/`). A `Disallow`
-  here affects those too.
+  (`/usageloop/`, `/cloakscan/`, `/ledger-local-finance/`, `/wedding-50-50/`).
+  A `Disallow` here affects those too.
+- When a project ships its own Pages site on this origin, it needs three things
+  here: a `sitemap.xml` entry, a card in `index.html`, and a real internal link
+  from that card to the page. The sitemap alone is the weakest of the three.
 
 ## Verification
 
