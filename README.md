@@ -27,16 +27,16 @@ domain.
 
 ## Open follow-ups
 
-- **Google Search Console: verification file is in place, rest is manual.**
+- **Keep the Google Search Console verification file.**
   `google0de73824cd6c6e23.html` sits in the repo root and serves at
   <https://benthompsondev.github.io/google0de73824cd6c6e23.html>. **Never delete
   it.** Search Console re-checks it and removing it drops ownership of the
-  property. The property is a URL-prefix one, not a Domain property, because
-  the Domain method needs a DNS record on `github.io`. Still to do by hand:
-  submit `sitemap.xml`, request indexing for the root once, request indexing
-  for `/usageloop/` now that it is linked and in the sitemap, and optionally
-  import the property into Bing Webmaster Tools. Expect weeks, not days, before
-  a name query moves.
+  property. The verified property is the URL-prefix
+  `https://benthompsondev.github.io/`, which also covers the project sites.
+  Bing Webmaster Tools also has a verified property for this hostname. Check
+  the current webmaster reports before submitting anything; a submission
+  receipt is not proof of indexing.
+  Do not repeatedly submit unchanged sitemaps or URLs.
 - **The other project pages carry no structured data.** `/usageloop/` has
   `SoftwareApplication` and `Person` JSON-LD; `/cloakscan/` and
   `/ledger-local-finance/` have none. That is a fix in those repos, not this
@@ -48,17 +48,22 @@ domain.
 
 ## Editing notes
 
+- The host-root file with a 32-character hexadecimal name and `.txt` extension
+  is the IndexNow ownership file. Its contents must match its filename. Keep
+  it published while using IndexNow; it is not a tracking script. One root
+  key covers this hostname and its project directories, not other `github.io`
+  hosts. Submit only genuinely new, changed or deleted URLs. An accepted
+  request confirms receipt, not indexing. See the
+  [IndexNow protocol](https://www.indexnow.org/documentation).
+
 - `index.html` has three places that repeat the same description text: the
   `<meta name="description">`, the Open Graph tags, and the Twitter tags. Change
   one, change all three.
 - Update `<lastmod>` in `sitemap.xml` and `dateModified` in the JSON-LD when the
-  content meaningfully changes. `<lastmod>` is the only sitemap hint Google
-  actually uses, and only while it stays verifiable, so check the real date
-  before writing one:
-
-  ```bash
-  curl -sI https://benthompsondev.github.io/usageloop/ | grep -i last-modified
-  ```
+  content meaningfully changes. Base dates on the page's content revision,
+  including the owning project repo for project pages. A Pages rebuild or an
+  HTTP `Last-Modified` timestamp alone does not prove that the content changed.
+  Leave `<lastmod>` out when the content date cannot be established.
 
   Google ignores `<changefreq>` and `<priority>`, so this sitemap does not carry
   them. Do not add them back.
